@@ -14,6 +14,7 @@ find_package(glfw3 REQUIRED)
 
 # Use  cmake -S . -B build/ -DOpenGL_GL_PREFERENCE=GLVND
 # to skip legacy OpenGL library
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 find_package(imgui REQUIRED)
 
@@ -29,13 +30,12 @@ target_include_directories(
         ${CMAKE_SOURCE_DIR}/imspinner
 )
 
-target_link_libraries(
-	ImGui-GLFW-OpenGL3
-  PRIVATE
-  	glfw
-	OpenGL
-    imgui::imgui
-)
+IF (WIN32)
+    target_link_libraries(ImGui-GLFW-OpenGL3 PRIVATE glfw opengl32.lib imgui::imgui)
+ELSE()
+	target_link_libraries(ImGui-GLFW-OpenGL3 PRIVATE glfw OpenGL imgui::imgui)
+ENDIF()
+
 
 target_sources(
 	ImGui-GLFW-OpenGL3
@@ -48,5 +48,4 @@ target_sources(
 
         ${CMAKE_SOURCE_DIR}/imgui-knobs/imgui-knobs.cpp
 )
-
 

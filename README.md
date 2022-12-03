@@ -28,8 +28,13 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 # Using vcpkg with MSBuild / Visual Studio (may require elevation)
 > .\vcpkg\vcpkg.exe integrate install
 
+# Compile and Run
+> cmake . -B build/
+> cmake --build build
+> build\Debug\ImGui-GLFW-OpenGL3.exe
+
 ```
-We are ready to open the project in Visual Studio and Run!
+We are ready to open the project in Visual Studio and Run too!
 
 
 ### On Linux/WSL2
