@@ -149,8 +149,10 @@
     <ClCompile Include="implot\implot_demo.cpp" />
     <ClCompile Include="implot\implot_items.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="main.cpp.old" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppBase.hpp" />
     <ClInclude Include="imgui-knobs\imgui-knobs.h" />
     <ClInclude Include="implot\implot.h" />
     <ClInclude Include="implot\implot_internal.h" />
