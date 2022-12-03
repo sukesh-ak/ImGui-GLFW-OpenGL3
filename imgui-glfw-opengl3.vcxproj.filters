@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="implot\implot.cpp">
+      <Filter>implot</Filter>
+    </ClCompile>
+    <ClCompile Include="implot\implot_demo.cpp">
+      <Filter>implot</Filter>
+    </ClCompile>
+    <ClCompile Include="implot\implot_items.cpp">
+      <Filter>implot</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui-knobs\imgui-knobs.cpp">
+      <Filter>imgui-knobs</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="implot">
+      <UniqueIdentifier>{7cf06f9d-905e-4bd4-9236-61b09874e6a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui-knobs">
+      <UniqueIdentifier>{55332272-28b4-49e1-aaf6-863cbdf5fa15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imspinner">
+      <UniqueIdentifier>{cab5ff27-3b0a-46dd-a969-32c5468c11d5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="implot\implot.h">
+      <Filter>implot</Filter>
+    </ClInclude>
+    <ClInclude Include="implot\implot_internal.h">
+      <Filter>implot</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui-knobs\imgui-knobs.h">
+      <Filter>imgui-knobs</Filter>
+    </ClInclude>
+    <ClInclude Include="imspinner\imspinner.h">
+      <Filter>imspinner</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
