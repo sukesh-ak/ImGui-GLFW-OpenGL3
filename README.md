@@ -13,8 +13,8 @@
 Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/index.html) 
 ```bash
 # Clone this repository
-git clone https://github.com/sukesh-ak/imgui-glfw-opengl3
-cd imgui-glfw-opengl3
+git clone https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
+cd ImGui-GLFW-OpenGL3
 
 # Clone/Install VC++ Package Manager
 git clone https://github.com/Microsoft/vcpkg.git
