@@ -1,3 +1,3 @@
 cmake . -B build/ 
 cmake --build build
-./build/ImGui-GLFW-OpenGL3
+build\debug\ImGui-GLFW-OpenGL3
