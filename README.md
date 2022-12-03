@@ -57,7 +57,7 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 > ./vcpkg/vcpkg install imgui[core,docking-experimental,glfw-binding,opengl3-binding]:x64-linux
 
 # Compile and Run
-> cmake -S . -B build/ -DOpenGL_GL_PREFERENCE=GLVND
+> cmake . -B build/ 
 > cmake --build build
 > ./build/ImGui-GLFW-OpenGL3
 
