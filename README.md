@@ -64,6 +64,9 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 ```
 That's it!
 
+### Screenshot
+![Screenshot](assets/screenshot.png)  
+
 ## Docs and Helpful links
 - Live Documentation [here](https://pthom.github.io/imgui_manual_online/manual/imgui_manual.html)
 - Docs on Examples [here](https://github.com/ocornut/imgui/blob/master/docs/EXAMPLES.md)
