@@ -64,13 +64,17 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 ```
 That's it!
 
-
+## Docs and Helpful links
+- Live Documentation [here](https://pthom.github.io/imgui_manual_online/manual/imgui_manual.html)
+- Docs on Examples [here](https://github.com/ocornut/imgui/blob/master/docs/EXAMPLES.md)
+- Wiki with examples and usage [here](https://github.com/ocornut/imgui/wiki)
+- Useful Extensions [here](https://github.com/ocornut/imgui/wiki/Useful-Extensions)
 ## Credits
-Dear ImGui - https://github.com/ocornut/imgui  
-GLFW - https://www.glfw.org/  
-OpenGL - https://www.opengl.org/  
-ImPlot - https://github.com/epezent/implot  
-ImGui Knobs - https://github.com/altschuler/imgui-knobs  
-ImSpinner - https://github.com/dalerank/imspinner
+- Dear ImGui - https://github.com/ocornut/imgui  
+- GLFW - https://www.glfw.org/  
+- OpenGL - https://www.opengl.org/  
+- ImPlot - https://github.com/epezent/implot  
+- ImGui Knobs - https://github.com/altschuler/imgui-knobs  
+- ImSpinner - https://github.com/dalerank/imspinner
 
 

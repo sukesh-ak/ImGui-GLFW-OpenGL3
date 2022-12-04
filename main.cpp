@@ -11,6 +11,7 @@
 #include "imgui-knobs/imgui-knobs.h"
 #include "imspinner/imspinner.h"
 
+#include <cmath>
 #include <stdio.h>
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -31,7 +32,95 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+float to_radian(float deg)
+{
+    return(deg * (180 / 3.14));
+}
+
 static float knob_value = 0;
+
+
+// utility structure for realtime plot
+struct ScrollingBuffer {
+    int MaxSize;
+    int Offset;
+    ImVector<ImVec2> Data;
+    ScrollingBuffer(int max_size = 2000) {
+        MaxSize = max_size;
+        Offset = 0;
+        Data.reserve(MaxSize);
+    }
+    void AddPoint(float x, float y) {
+        if (Data.size() < MaxSize)
+            Data.push_back(ImVec2(x, y));
+        else {
+            Data[Offset] = ImVec2(x, y);
+            Offset = (Offset + 1) % MaxSize;
+        }
+    }
+    void Erase() {
+        if (Data.size() > 0) {
+            Data.shrink(0);
+            Offset = 0;
+        }
+    }
+};
+
+// utility structure for realtime plot
+struct RollingBuffer {
+    float Span;
+    ImVector<ImVec2> Data;
+    RollingBuffer() {
+        Span = 10.0f;
+        Data.reserve(2000);
+    }
+    void AddPoint(float x, float y) {
+        float xmod = fmodf(x, Span);
+        if (!Data.empty() && xmod < Data.back().x)
+            Data.shrink(0);
+        Data.push_back(ImVec2(xmod, y));
+    }
+};
+
+void Demo_RealtimePlots() {
+    ImGui::BulletText("Move your mouse to change the data!");
+    ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
+    static ScrollingBuffer sdata1, sdata2;
+    static RollingBuffer   rdata1, rdata2;
+    ImVec2 mouse = ImGui::GetMousePos();
+    static float t = 0;
+    t += ImGui::GetIO().DeltaTime;
+    sdata1.AddPoint(t, mouse.x * 0.0005f);
+    rdata1.AddPoint(t, mouse.x * 0.0005f);
+    sdata2.AddPoint(t, mouse.y * 0.0005f);
+    rdata2.AddPoint(t, mouse.y * 0.0005f);
+
+    static float history = 10.0f;
+    ImGui::SliderFloat("History", &history, 1, 30, "%.1f s");
+    rdata1.Span = history;
+    rdata2.Span = history;
+
+    static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoTickMarks;
+
+    if (ImPlot::BeginPlot("Scrolling", ImVec2(-1, 250))) {
+        ImPlot::SetupAxes("Scrolling Title a", "Scrolling Title b", flags, flags);
+        ImPlot::SetupAxisLimits(ImAxis_X1, t - history, t, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+        ImPlot::PlotShaded("Mouse X", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, sdata1.Offset, 2 * sizeof(float));
+        ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), 0, sdata2.Offset, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+    if (ImPlot::BeginPlot("Rolling", ImVec2(-1, 250))) {
+        ImPlot::SetupAxes(NULL, NULL, flags, flags);
+        ImPlot::SetupAxisLimits(ImAxis_X1, 0, history, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 1);
+        ImPlot::PlotLine("Mouse X", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 0, 2 * sizeof(float));
+        ImPlot::PlotLine("Mouse Y", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 0, 2 * sizeof(float));
+        ImPlot::EndPlot();
+    }
+}
+
 
 int main(int, char**)
 {
@@ -115,9 +204,16 @@ int main(int, char**)
     //IM_ASSERT(font != NULL);
 
     // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    bool show_demo_window = false;
+    bool show_playground_window = false;
+    bool show_plot_window = false;
+    bool show_knob_window = false;
+    float r = 50;
+    float angle = 0.0f;
+    ImVec2 midpoint = {}, point_on_circle = {};
+    int frame_counter = 60;
+
+    ImVec4 clear_color = ImVec4(0.168f, 0.394f, 0.534f, 1.00f);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -134,9 +230,17 @@ int main(int, char**)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | 
+                                        ImGuiWindowFlags_NoCollapse | 
+                                        ImGuiWindowFlags_MenuBar |
+                                        ImGuiWindowFlags_DockNodeHost;
+        ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window) {
             ImGui::ShowDemoWindow(&show_demo_window);
+        }
+        if (show_plot_window) {
             ImPlot::ShowDemoWindow(&show_demo_window);
         }
 
@@ -145,11 +249,13 @@ int main(int, char**)
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Text("Configure the App below.");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            ImGui::Checkbox("Playground", &show_playground_window);
+            ImGui::Checkbox("Plot Window", &show_plot_window);
+            ImGui::Checkbox("Knob Window", &show_knob_window);
 
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
@@ -159,40 +265,60 @@ int main(int, char**)
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
 
-            /** ImGuiKnobVariant_Tick, 
-                ImGuiKnobVariant_Dot, 
-                ImGuiKnobVariant_Wiper, 
-                ImGuiKnobVariant_WiperOnly, 
-                ImGuiKnobVariant_WiperDot, 
-                ImGuiKnobVariant_Stepped, 
-                ImGuiKnobVariant_Space 
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+
+        }
+
+        // 3. Show another simple window.
+        if (show_playground_window)
+        {
+            ImGui::Begin("Playground", &show_playground_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from Playground!");
+            if (ImGui::Button("Close Me"))
+                show_playground_window = false;
+
+            Demo_RealtimePlots();
+            ImGui::End();
+        }
+
+        if (show_knob_window)
+        {
+            ImGui::Begin("Knob Demo!");
+            /** ImGuiKnobVariant_Tick,
+                ImGuiKnobVariant_Dot,
+                ImGuiKnobVariant_Wiper,
+                ImGuiKnobVariant_WiperOnly,
+                ImGuiKnobVariant_WiperDot,
+                ImGuiKnobVariant_Stepped,
+                ImGuiKnobVariant_Space
              **/
             ImGui::BeginGroup();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Tick,50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Tick, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Dot, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Dot, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Wiper, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Wiper, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_WiperOnly, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_WiperOnly, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_WiperDot, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_WiperDot, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Stepped, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Stepped, 100)) {
                 // value was changed
             }
             ImGui::SameLine();
-            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Space, 50)) {
+            if (ImGuiKnobs::Knob("Volume", &knob_value, -6.0f, 6.0f, 0.1f, "%.1fdB", ImGuiKnobVariant_Space, 100)) {
                 // value was changed
             }
 
@@ -202,20 +328,42 @@ int main(int, char**)
             // Spinners- https://github.com/dalerank/imspinner
             // ImSpinner::Spinner
 
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            auto screen_pos = ImGui::GetCursorScreenPos();
+            float radius = 50.0;
+
+
+            //if (angle > 360) angle = 0;
+            midpoint = { screen_pos[0] + radius ,screen_pos[1] + radius*2  };
+            ImGui::SliderFloat("##float", &angle, 0.0f, 360.0f);
+
+            frame_counter++;
+            if (frame_counter > 60) {
+                frame_counter = 0;
+                angle++;
+                /* Drawing a circle using Trigonometry for fun */
+                point_on_circle[0] = midpoint[0] + r * cosf(angle);
+                point_on_circle[1] = midpoint[1] + r * sinf(angle);
+            }
+
+            
+            // Outline - BLUE
+            draw_list->AddCircle(midpoint, 50, ImGui::GetColorU32(IM_COL32(0, 0, 255, 255)), 0, 10);
+
+            // Small filled circle for midpoint
+            draw_list->AddCircleFilled(midpoint, 5, ImGui::GetColorU32(IM_COL32(255, 0, 255, 255)), 0);
+
+            // Small filled circle on the above circular path
+            draw_list->AddCircleFilled(point_on_circle, 3, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)), 0);
+
+            // Line starting from midpoint to circumference of the circle
+            draw_list->AddLine(midpoint,point_on_circle,ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)), 2);
+
             ImGui::EndGroup();
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            
             ImGui::End();
-        }
 
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
+            
         }
 
         // Rendering
