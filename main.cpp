@@ -34,7 +34,7 @@ static void glfw_error_callback(int error, const char* description)
 
 float to_radian(float deg)
 {
-    return(deg * (180 / 3.14));
+    return(deg * (3.14 / 180.0));
 }
 
 static float knob_value = 0;
@@ -211,7 +211,6 @@ int main(int, char**)
     float r = 50;
     float angle = 0.0f;
     ImVec2 midpoint = {}, point_on_circle = {};
-    int frame_counter = 60;
 
     ImVec4 clear_color = ImVec4(0.168f, 0.394f, 0.534f, 1.00f);
 
@@ -337,15 +336,10 @@ int main(int, char**)
             midpoint = { screen_pos[0] + radius ,screen_pos[1] + radius*2  };
             ImGui::SliderFloat("##float", &angle, 0.0f, 360.0f);
 
-            frame_counter++;
-            if (frame_counter > 60) {
-                frame_counter = 0;
-                angle++;
-                /* Drawing a circle using Trigonometry for fun */
-                point_on_circle[0] = midpoint[0] + r * cosf(angle);
-                point_on_circle[1] = midpoint[1] + r * sinf(angle);
-            }
-
+            /* Drawing a circle using Trigonometry for fun */
+            point_on_circle[0] = midpoint[0] + r * cosf(to_radian(angle));
+            point_on_circle[1] = midpoint[1] + r * sinf(to_radian(angle));
+            (angle > 359)? angle=0:angle++;
             
             // Outline - BLUE
             draw_list->AddCircle(midpoint, 50, ImGui::GetColorU32(IM_COL32(0, 0, 255, 255)), 0, 10);
