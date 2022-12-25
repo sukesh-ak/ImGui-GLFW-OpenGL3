@@ -16,8 +16,8 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 > git clone https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
 > cd ImGui-GLFW-OpenGL3
 
-# Clone/Install VC++ Package Manager
-> git clone https://github.com/Microsoft/vcpkg.git
+# Clone/Install VC++ Package Manager (add as submodule)
+> git submodule add https://github.com/microsoft/vcpkg.git
 
 # Run the bootstrap script to build vcpkg
 > .\vcpkg\bootstrap-vcpkg.bat
@@ -45,8 +45,8 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 > git clone https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
 > cd ImGui-GLFW-OpenGL3
 
-# Clone/Install VC++ Package Manager
-> git clone https://github.com/Microsoft/vcpkg.git
+# Clone/Install VC++ Package Manager (add as submodule)
+> git submodule add https://github.com/microsoft/vcpkg.git
 
 # Run the bootstrap script to build vcpkg
 > ./vcpkg/bootstrap-vcpkg.sh
