@@ -12,54 +12,47 @@
 ### On Windows
 Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/index.html) 
 ```bash
-# Clone this repository
-> git clone https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
+# Clone this repository with recursive option
+> git clone --recursive https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
 > cd ImGui-GLFW-OpenGL3
 
-# Clone/Install VC++ Package Manager (add as submodule)
-> git submodule add https://github.com/microsoft/vcpkg.git
-
-# Run the bootstrap script to build vcpkg
+# Run the bootstrap script for vcpkg
 > .\vcpkg\bootstrap-vcpkg.bat
 
-# Install dependencies required for this project
-> .\vcpkg\vcpkg.exe install imgui[core,win32-binding,docking-experimental,glfw-binding,opengl3-binding]:x64-windows
+# Install imgui dependencies using vcpkg manifest (vcpkg.json)
+> .\vcpkg\vcpkg install 
 
-# Using vcpkg with MSBuild / Visual Studio (may require elevation)
-> .\vcpkg\vcpkg.exe integrate install
-
-# Compile and Run
+# Compile and Run (or run  .\win-build.bat)
 > cmake . -B build/
 > cmake --build build
 > build\Debug\ImGui-GLFW-OpenGL3.exe
 
 ```
-We are ready to open the project in Visual Studio and Run too!
+We are ready to open the project in Visual Studio and Run too!  
+Use `Open Folder` option in Visual Studio to use `CMake` support.
 
 
 ### On Linux/WSL2
 Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/index.html) 
 
 ```bash
-# Clone this repository
-> git clone https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
-> cd ImGui-GLFW-OpenGL3
+# Clone this repository with recursive option
+$ git clone --recursive https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
+$ cd ImGui-GLFW-OpenGL3
 
-# Clone/Install VC++ Package Manager (add as submodule)
-> git submodule add https://github.com/microsoft/vcpkg.git
+# Run the bootstrap script for vcpkg
+$ ./vcpkg/bootstrap-vcpkg.sh
 
-# Run the bootstrap script to build vcpkg
-> ./vcpkg/bootstrap-vcpkg.sh
+# Install dependencies required (will add to manifest later)
+$ sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
 
-# Install dependencies required for this project
-> sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+# Install imgui dependencies using vcpkg manifest (vcpkg.json)
+$ ./vcpkg/vcpkg install 
 
-> ./vcpkg/vcpkg install imgui[core,docking-experimental,glfw-binding,opengl3-binding]:x64-linux
-
-# Compile and Run
-> cmake . -B build/ 
-> cmake --build build
-> ./build/ImGui-GLFW-OpenGL3
+# Compile and Run (or run ./linux-build.sh)
+$ cmake . -B build/ 
+$ cmake --build build
+$ ./build/ImGui-GLFW-OpenGL3
 
 ```
 That's it!
