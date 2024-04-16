@@ -11,8 +11,13 @@
 #include "imgui-knobs/imgui-knobs.h"
 #include "imspinner/imspinner.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image/stb_image.h> // for image loading
+
+#include <iostream>
 #include <cmath>
 #include <stdio.h>
+
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -26,6 +31,60 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
+
+// Function to load image into a texture
+GLuint LoadTexture(const char* filename) {
+    int width, height, channels;
+    unsigned char* data = stbi_load(filename, &width, &height, &channels, 0);
+    if (!data) {
+        std::cerr << "Failed to load image: " << filename << std::endl;
+        return 0;
+    }
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+
+    return textureID;
+}
+
+// Function to render ImGui interface
+// Simple helper function to load an image into a OpenGL texture with common settings
+bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+{
+    // Load from file
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create a OpenGL texture identifier
+    GLuint image_texture;
+    glGenTextures(1, &image_texture);
+    glBindTexture(GL_TEXTURE_2D, image_texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    stbi_image_free(image_data);
+
+    *out_texture = image_texture;
+    *out_width = image_width;
+    *out_height = image_height;
+
+    return true;
+}
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -214,6 +273,12 @@ int main(int, char**)
 
     ImVec4 clear_color = ImVec4(0.168f, 0.394f, 0.534f, 1.00f);
 
+    // Define a struct to represent a bounding box
+    struct BoundingBox {
+        ImVec2 start;
+        ImVec2 end;
+    };    
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -235,6 +300,7 @@ int main(int, char**)
                                         ImGuiWindowFlags_DockNodeHost;
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
+#if 0
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window) {
             ImGui::ShowDemoWindow(&show_demo_window);
@@ -359,6 +425,76 @@ int main(int, char**)
 
             
         }
+#endif 
+
+
+        const float HANDLE_RADIUS = 5.0f;
+        static std::vector<BoundingBox> boundingBoxes;
+
+        int my_image_width = 0;
+        int my_image_height = 0;
+        static ImVec2 boxStart = ImVec2(1022,613);
+        static ImVec2 boxEnd = ImVec2(1225,669);
+        static bool annotate = false;
+        static bool drawingBox = false;
+        static bool drawingBoxCompleted = false;
+        static int hoveredBoxIndex = -1;
+        static ImVec2 imageOffset;
+        static float imageScale = 1.0f;
+
+
+        GLuint my_image_texture = 0;
+        bool ret = LoadTextureFromFile("car.jpg", &my_image_texture, &my_image_width, &my_image_height);
+        IM_ASSERT(ret);
+        ImGui::Begin("OpenGL Texture Text");
+
+        ImGui::Text("pointer = %x", my_image_texture);
+        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
+        ImGui::Image((void*)(intptr_t)my_image_texture, ImVec2(my_image_width, my_image_height));
+
+
+        if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+            BoundingBox newBox;
+            newBox.start = ImGui::GetMousePos();
+            newBox.end = newBox.start;
+            boundingBoxes.push_back(newBox);
+            drawingBox = true;
+        }
+
+        if (drawingBox && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            boundingBoxes.back().end = ImGui::GetMousePos();
+        }
+
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+            drawingBox = false;
+        }
+
+        // Check for hover over existing bounding boxes
+        hoveredBoxIndex = -1;
+        for (size_t i = 0; i < boundingBoxes.size(); ++i) {
+            const BoundingBox& box = boundingBoxes[i];
+            if (ImGui::IsMouseHoveringRect(box.start, box.end) && !drawingBox) {
+                hoveredBoxIndex = static_cast<int>(i);
+                break;
+            }
+        }
+
+        // Draw all bounding boxes
+        for (size_t i = 0; i < boundingBoxes.size(); ++i) {
+            const BoundingBox& box = boundingBoxes[i];
+            ImGui::GetWindowDrawList()->AddRect(box.start, box.end, IM_COL32(255, 255, 0, 255));
+            if (static_cast<int>(i) == hoveredBoxIndex) {
+                ImGui::GetWindowDrawList()->AddCircleFilled(box.start, 4.0f, IM_COL32(255, 0, 0, 255));
+                ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.end.x, box.start.y), 4.0f, IM_COL32(255, 0, 0, 255));
+                ImGui::GetWindowDrawList()->AddCircleFilled(box.end, 4.0f, IM_COL32(255, 0, 0, 255));
+                ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.start.x, box.end.y), 4.0f, IM_COL32(255, 0, 0, 255));
+            }
+        }
+
+        ImGui::Text("Bounding Box = (%f,%f) - (%f,%f)", boxStart.x,boxStart.y,boxEnd.x,boxEnd.y);
+        
+
+        ImGui::End();
 
         // Rendering
         ImGui::Render();
