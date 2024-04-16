@@ -46,6 +46,10 @@ $ ./vcpkg/bootstrap-vcpkg.sh
 # Install dependencies required (will add to manifest later)
 $ sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
 
+# Install OpenGL for WSL (if it complains during compilation)
+$ sudo apt install mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev
+
+
 # Install imgui dependencies using vcpkg manifest (vcpkg.json)
 $ ./vcpkg/vcpkg install 
 
