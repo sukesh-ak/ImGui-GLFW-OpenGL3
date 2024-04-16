@@ -273,8 +273,8 @@ int main(int, char**)
 
     ImVec4 clear_color = ImVec4(0.168f, 0.394f, 0.534f, 1.00f);
 
+    
     static ImageAnnotation imageAnnotation;
-
 
     // Main loop
     while (!glfwWindowShouldClose(window))

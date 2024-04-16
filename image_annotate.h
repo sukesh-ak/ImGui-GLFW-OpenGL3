@@ -19,7 +19,7 @@ struct BoundingBox {
 
 class ImageAnnotation {
 public:
-    ImageAnnotation() : image_data(nullptr), imageWidth(0), imageHeight(0) {}
+    //ImageAnnotation() : image_data(nullptr), imageWidth(0), imageHeight(0) {}
 
     ~ImageAnnotation() {
         stbi_image_free(image_data);
@@ -28,7 +28,6 @@ public:
     void loadImage(const char* filename) {
         bool ret = LoadTextureFromFile(filename);//,&image_texture,&imageWidth, &imageHeight);
         IM_ASSERT(ret);
-        
     }
 
     void draw() {
@@ -72,10 +71,10 @@ public:
                 ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.end.x, box.start.y), 4.0f, IM_COL32(255, 0, 0, 255));
                 ImGui::GetWindowDrawList()->AddCircleFilled(box.end, 4.0f, IM_COL32(255, 0, 0, 255));
                 ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.start.x, box.end.y), 4.0f, IM_COL32(255, 0, 0, 255));
+                ImGui::Text("Bounding Box = (%f,%f) - (%f,%f)", box.start.x,box.start.y,box.end.x,box.end.y);
             }
         }
-
-        //ImGui::Text("Bounding Box = (%f,%f) - (%f,%f)", boxStart.x,boxStart.y,boxEnd.x,boxEnd.y);
+        
 
 /* END */
         }
@@ -116,8 +115,7 @@ private:
     #endif
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
         
-
-        boundingBoxes.clear();
+        //boundingBoxes.clear();
         return true;
     }
 
@@ -130,6 +128,4 @@ private:
     GLuint image_texture=0;
 
     bool is_drawing_boundingboxes;
-
-
 };
