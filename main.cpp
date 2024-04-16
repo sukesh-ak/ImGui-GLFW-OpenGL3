@@ -11,8 +11,7 @@
 #include "imgui-knobs/imgui-knobs.h"
 #include "imspinner/imspinner.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image/stb_image.h> // for image loading
+#include "image_annotate.h"
 
 #include <iostream>
 #include <cmath>
@@ -267,17 +266,15 @@ int main(int, char**)
     bool show_playground_window = false;
     bool show_plot_window = false;
     bool show_knob_window = false;
+    bool show_annotate_window = true;
     float r = 50;
     float angle = 0.0f;
     ImVec2 midpoint = {}, point_on_circle = {};
 
     ImVec4 clear_color = ImVec4(0.168f, 0.394f, 0.534f, 1.00f);
 
-    // Define a struct to represent a bounding box
-    struct BoundingBox {
-        ImVec2 start;
-        ImVec2 end;
-    };    
+    static ImageAnnotation imageAnnotation;
+
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -300,7 +297,7 @@ int main(int, char**)
                                         ImGuiWindowFlags_DockNodeHost;
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-#if 0
+#if 1
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window) {
             ImGui::ShowDemoWindow(&show_demo_window);
@@ -321,6 +318,7 @@ int main(int, char**)
             ImGui::Checkbox("Playground", &show_playground_window);
             ImGui::Checkbox("Plot Window", &show_plot_window);
             ImGui::Checkbox("Knob Window", &show_knob_window);
+            ImGui::Checkbox("Annotate Window", &show_annotate_window);
 
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
@@ -427,74 +425,17 @@ int main(int, char**)
         }
 #endif 
 
+        if (show_annotate_window) 
+        {
+            ImGui::Begin("Image Annotation",&show_annotate_window);
+            imageAnnotation.loadImage("car.jpg");
+            ImGui::Text("Image size = %d x %d", 
+                imageAnnotation.GetWidth(), 
+                imageAnnotation.GetHeight());
+            imageAnnotation.draw();
 
-        const float HANDLE_RADIUS = 5.0f;
-        static std::vector<BoundingBox> boundingBoxes;
-
-        int my_image_width = 0;
-        int my_image_height = 0;
-        static ImVec2 boxStart = ImVec2(1022,613);
-        static ImVec2 boxEnd = ImVec2(1225,669);
-        static bool annotate = false;
-        static bool drawingBox = false;
-        static bool drawingBoxCompleted = false;
-        static int hoveredBoxIndex = -1;
-        static ImVec2 imageOffset;
-        static float imageScale = 1.0f;
-
-
-        GLuint my_image_texture = 0;
-        bool ret = LoadTextureFromFile("car.jpg", &my_image_texture, &my_image_width, &my_image_height);
-        IM_ASSERT(ret);
-        ImGui::Begin("OpenGL Texture Text");
-
-        ImGui::Text("pointer = %x", my_image_texture);
-        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
-        ImGui::Image((void*)(intptr_t)my_image_texture, ImVec2(my_image_width, my_image_height));
-
-
-        if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-            BoundingBox newBox;
-            newBox.start = ImGui::GetMousePos();
-            newBox.end = newBox.start;
-            boundingBoxes.push_back(newBox);
-            drawingBox = true;
+            ImGui::End();
         }
-
-        if (drawingBox && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-            boundingBoxes.back().end = ImGui::GetMousePos();
-        }
-
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-            drawingBox = false;
-        }
-
-        // Check for hover over existing bounding boxes
-        hoveredBoxIndex = -1;
-        for (size_t i = 0; i < boundingBoxes.size(); ++i) {
-            const BoundingBox& box = boundingBoxes[i];
-            if (ImGui::IsMouseHoveringRect(box.start, box.end) && !drawingBox) {
-                hoveredBoxIndex = static_cast<int>(i);
-                break;
-            }
-        }
-
-        // Draw all bounding boxes
-        for (size_t i = 0; i < boundingBoxes.size(); ++i) {
-            const BoundingBox& box = boundingBoxes[i];
-            ImGui::GetWindowDrawList()->AddRect(box.start, box.end, IM_COL32(255, 255, 0, 255));
-            if (static_cast<int>(i) == hoveredBoxIndex) {
-                ImGui::GetWindowDrawList()->AddCircleFilled(box.start, 4.0f, IM_COL32(255, 0, 0, 255));
-                ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.end.x, box.start.y), 4.0f, IM_COL32(255, 0, 0, 255));
-                ImGui::GetWindowDrawList()->AddCircleFilled(box.end, 4.0f, IM_COL32(255, 0, 0, 255));
-                ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(box.start.x, box.end.y), 4.0f, IM_COL32(255, 0, 0, 255));
-            }
-        }
-
-        ImGui::Text("Bounding Box = (%f,%f) - (%f,%f)", boxStart.x,boxStart.y,boxEnd.x,boxEnd.y);
-        
-
-        ImGui::End();
 
         // Rendering
         ImGui::Render();
