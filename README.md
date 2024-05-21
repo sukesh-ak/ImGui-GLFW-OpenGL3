@@ -40,6 +40,11 @@ Install dependencies using [vcpkg - (VC++ Package Manager)](https://vcpkg.io/en/
 $ git clone --recursive https://github.com/sukesh-ak/ImGui-GLFW-OpenGL3
 $ cd ImGui-GLFW-OpenGL3
 
+# ******** On Jetson Jetpack 5.x+ (Tested on Jetson Orin NX) ***
+$ sudo apt install ninja-build
+$ export VCPKG_FORCE_SYSTEM_BINARIES=1
+# *************************************************
+
 # Run the bootstrap script for vcpkg
 $ ./vcpkg/bootstrap-vcpkg.sh
 
@@ -48,7 +53,6 @@ $ sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-
 
 # Install OpenGL for WSL (if it complains during compilation)
 $ sudo apt install mesa-utils libglu1-mesa-dev freeglut3-dev mesa-common-dev
-
 
 # Install imgui dependencies using vcpkg manifest (vcpkg.json)
 $ ./vcpkg/vcpkg install 
